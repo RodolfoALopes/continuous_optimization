@@ -55,7 +55,7 @@ Cmake - Minimun Version 3.9
 
 ## Example
 
-For very quick complete examples, see the directory [examples](.tests/examples/).
+For very quick complete examples, see the directory [examples](tests/examples/).
 
 ### Implementing an Optimization Problem
 
