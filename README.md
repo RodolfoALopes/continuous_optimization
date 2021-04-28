@@ -35,7 +35,7 @@ Cmake - Minimun Version 3.9
 - Conjugate Gradient (CG) [1]
 - Coordinate Descent (CD) [3]
 - Gradient Descent (GD) [1]
-- Local Search with Groups of Step Sizes (LSGSS)
+- Local Search with Groups of Step Sizes (LSGSS) [10]
 - Limited Memory Broyden - Fletcher - Goldfarb - Shanno (L-BFGS) [1, 6]
 - Multiple Trajectory Search (MTS1) [7, 8]
 - Nelder-Mead (NM) [1]
@@ -154,3 +154,5 @@ We would like to thank the developers of these libraries:
 [8] D. Molina, A. LaTorre and F. Herrera, *SHADE with Iterative Local Search for Large-Scale Global Optimization.* IEEE Congress on Evolutionary Computation (CEC). (2018)
 
 [9] Virtual Library of Simulation Experiments. *Test Functions and Datasets - Sphere Function*. Access 08-11-2020. (2020)
+
+[10] R. A. Lopes, A. R. R. Freitas, R. C. P. Silva. *Local Search with Groups of Step Sizes* Operations Research Letters. (2021) 
