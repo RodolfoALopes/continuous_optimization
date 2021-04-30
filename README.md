@@ -49,11 +49,7 @@ Cmake - Minimun Version 3.9
 - Differential Evolution (DE) (*not available yet*)
 
 #### Decomposition Methods
- - Differential Grouping (DG) (*not available yet*)
- - Extended Differential Grouping (XDG) (*not available yet*)
- - Fast Interdependency Identification (FII) (*not available yet*)
- - Global Differential Grouping (GDG) (*not available yet*)
- - Recursive Differential Grouping 3 (RDG-3) (*not available yet*)
+ - [Continuous Optimization Decomposition Problem (COPD) Library](https://github.com/RodolfoALopes/decomposition_library)
 
 ## Gray-Box Approaches
 
@@ -136,7 +132,7 @@ Note that the continuous optimization algorithm can be easily changed just repla
 
 ## Benchmark Functions
 * Large Scale Global Optimization (LSGO) CEC'2013 Benchmark [2]
-
+* Gray-Box Version of the Large Scale Global Optimization (LSGO) CEC'2013 Benchmark
 
 ## Thanks
 We would like to thank the developers of these libraries:
