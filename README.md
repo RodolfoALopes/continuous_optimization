@@ -12,7 +12,7 @@ This continuous optimization project is a C++ library based on CppOptimizationLi
          * [Global Search Methods](#global-search-methods)
          * [Decomposition Methods](#decomposition-methods)
     * [Gray-Box Approaches](#gray-box-approaches)
-         * [Local Search Methods](#local-search-methods)
+         * [Local Search Methods](#local-search-methods-1)
 * [Example](#example)
 * [Benchmark Functions](#benchmark-functions)
 * [Thanks](#thanks)
