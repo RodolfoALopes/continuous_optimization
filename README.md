@@ -55,7 +55,7 @@ Cmake - Minimun Version 3.9
  - Global Differential Grouping (GDG) (*not available yet*)
  - Recursive Differential Grouping 3 (RDG-3) (*not available yet*)
 
-## Black-Box Approaches
+## Gray-Box Approaches
 
 #### Local Search Methods
 - Gray-Box Version of Local Search with Groups of Step Sizes (GBO-LSGSS)
