@@ -23,14 +23,16 @@ Cmake - Minimun Version 3.9
 
 ## Algorithms
 
-### Line Search Methods
+## Black-Box Approaches
+
+#### Line Search Methods
 - Accelerated Step Size (ASS) [4]
 - Brent's Method (BM) [5]
 - Golden Section (GS) [4]
 - Interval Halving (IH) [4]
 
 
-### Local Search Methods
+#### Local Search Methods
 - Broyden - Fletcher - Goldfarb - Shanno (BFGS) [1]
 - Conjugate Gradient (CG) [1]
 - Coordinate Descent (CD) [3]
@@ -42,17 +44,22 @@ Cmake - Minimun Version 3.9
 - Newton Descent (ND) [1]
 - Powell’s Method (PM) [4]
 
-### Global Search Methods
+#### Global Search Methods
 - Covariance Matrix Adaptation Evolution Strategy (CMA-ES) (*not available yet*)
 - Differential Evolution (DE) (*not available yet*)
 
-### Decomposition Methods
+#### Decomposition Methods
  - Differential Grouping (DG) (*not available yet*)
  - Extended Differential Grouping (XDG) (*not available yet*)
  - Fast Interdependency Identification (FII) (*not available yet*)
  - Global Differential Grouping (GDG) (*not available yet*)
  - Recursive Differential Grouping 3 (RDG-3) (*not available yet*)
 
+## Black-Box Approaches
+
+#### Local Search Methods
+- Gray-Box Version of Local Search with Groups of Step Sizes (GBO-LSGSS)
+ 
 ## Example
 
 For very quick complete examples, see the directory [examples](tests/examples/).
