@@ -79,6 +79,10 @@ namespace solver {
         T alpha;
         bool auto_update_steps;
 
+        // GBO-LSGSS parameters
+        size_t eval_per_cycle;
+        T initial_fit_accumulation;
+
     public:
 
         static options defaults() {
@@ -100,6 +104,11 @@ namespace solver {
             op_.beta = 0.025;
             op_.alpha = 0.25;
             op_.auto_update_steps = true;
+
+
+            // GBO - LSGSS - Parameters
+            op_.eval_per_cycle = 100;
+            op_.initial_fit_accumulation = 0.01;
 
             return op_;
         }
@@ -190,6 +199,22 @@ namespace solver {
 
         storage_criteria_level get_storage_criteria() {
             return storage_criteria;
+        }
+
+        void set_initial_fit_accumulation(T i){
+            initial_fit_accumulation = i;
+        }
+
+        T get_initial_fit_accumulation(){
+            return initial_fit_accumulation;
+        }
+
+        void set_eval_per_cycle(size_t s){
+            eval_per_cycle = s;
+        }
+
+        size_t get_eval_per_cycle(){
+            return eval_per_cycle;
         }
     };
 
