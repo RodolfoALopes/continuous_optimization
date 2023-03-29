@@ -57,7 +57,7 @@ Cmake - Minimun Version 3.9
 ## Gray-Box Approaches
 
 #### Local Search Methods
-- Gray-Box Version of Local Search with Groups of Step Sizes (GBO-LSGSS)
+- Gray-Box Local Search with Groups of Step Sizes (GBO-LSGSS)
  
 ## Example
 

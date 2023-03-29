@@ -1,5 +1,5 @@
-#ifndef CONTINUOUS_NON_LINEAR_OPTIMIZATION_LSGSS_GBO_SOLVER_H
-#define CONTINUOUS_NON_LINEAR_OPTIMIZATION_LSGSS_GBO_SOLVER_H
+#ifndef CONTINUOUS_NON_LINEAR_OPTIMIZATION_GBO_LSGSS_SOLVER_H
+#define CONTINUOUS_NON_LINEAR_OPTIMIZATION_GBO_LSGSS_SOLVER_H
 
 #include <iostream>
 #include <algorithm>
@@ -20,7 +20,7 @@ namespace solver {
     static default_random_engine generator_((int) std::chrono::system_clock::now().time_since_epoch().count());
 
     template<typename problem_type>
-    class lsgss_gbo_solver : public solver_interface<problem_type, 1> {
+    class gbo_lsgss_solver : public solver_interface<problem_type, 1> {
 
     public:
         using superclass = solver_interface<problem_type, 1>;
@@ -55,9 +55,9 @@ namespace solver {
 
     public:
 
-        lsgss_gbo_solver() = default;
+        gbo_lsgss_solver() = default;
 
-        explicit lsgss_gbo_solver(const criteria_t &s) : superclass(s) {};
+        explicit gbo_lsgss_solver(const criteria_t &s) : superclass(s) {};
 
         bool check_data_structure() {
             if (dim == improvement_groups.size()) {
@@ -116,7 +116,7 @@ namespace solver {
             if(!this->check_data_structure()){
                 create_steps(problem, dim);
             }
-            cooperative_coevolutive(problem, x);
+            gbo_lsgss(problem, x);
         }
 
         vector_t get_best_solution(){
@@ -197,7 +197,7 @@ namespace solver {
             return delta;
         }
 
-        void l4s(problem_type &problem, size_t i_sub_function, vector_t &x0, vector_t &fx, criteria_t &stop_cycle_criteria, criteria_t &current_cycle_criteria){
+        void lsgss(problem_type &problem, size_t i_sub_function, vector_t &x0, vector_t &fx, criteria_t &stop_cycle_criteria, criteria_t &current_cycle_criteria){
             status current_global_status = checkConvergence(this->stop_, this->current_);
             status current_cycle_status = checkConvergence(stop_cycle_criteria, current_cycle_criteria);
             vector<size_t> v(sub_function_to_variable[i_sub_function].begin(), sub_function_to_variable[i_sub_function].end());
@@ -256,7 +256,7 @@ namespace solver {
             }
         }
 
-        void cooperative_coevolutive(problem_type &problem, vector_t &x){
+        void gbo_lsgss(problem_type &problem, vector_t &x){
             vector_t fx_current = vector_t::Ones(number_sub_functions+1);
             scalar fx = 0.0;
             if(use_decomposition_functions){
@@ -300,7 +300,7 @@ namespace solver {
                     }
                     scalar old_fx_gain = fx_current[index_fx];
                     scalar old_fx = fx_current[number_sub_functions];
-                    l4s(problem, id_group, x, fx_current, stop_cycle_criteria, current_cycle_criteria);
+                    lsgss(problem, id_group, x, fx_current, stop_cycle_criteria, current_cycle_criteria);
                     if (fx_current[number_sub_functions] < old_fx) {
                         scalar fit_improved = (old_fx - fx_current[number_sub_functions]) / old_fx;
                         fit_accumulation[id_group] = (fit_accumulation[id_group] + fit_improved) / 2.0;
@@ -328,4 +328,4 @@ namespace solver {
     };
 }
 
-#endif //CONTINUOUS_NON_LINEAR_OPTIMIZATION_LSGSS_GBO_SOLVER_H
+#endif //CONTINUOUS_NON_LINEAR_OPTIMIZATION_GBO_LSGSS_SOLVER_H

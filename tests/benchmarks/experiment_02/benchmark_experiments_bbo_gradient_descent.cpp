@@ -1,6 +1,5 @@
 #include <iostream>
 #include <fstream>
-#include <vector>
 #include <chrono>
 #include <string>
 #include <solver/common.h>
@@ -19,25 +18,14 @@
 #include <solver/problem/bounded_problems/gbo_cec_2013_benchmark/f13_graybox_cec.h>
 #include <solver/problem/bounded_problems/gbo_cec_2013_benchmark/f14_graybox_cec.h>
 #include <solver/problem/bounded_problems/gbo_cec_2013_benchmark/f15_graybox_cec.h>
-#include <solver/solver/local_search/lsgss_solver.h>
+#include <solver/solver/local_search/gradient_descent_solver.h>
+#include <iomanip>
 
 
 using namespace solver;
 using namespace std;
 
 typedef long double scalar;
-
-class experiment {
-
-public:
-    experiment() = default;
-    size_t id{};
-    string exp_file_name;
-    scalar beta{};
-    scalar alpha{};
-    size_t number_groups{};
-    size_t number_steps{};
-};
 
 
 template<typename T>
@@ -56,8 +44,7 @@ void get_random_generate_solution(T &x, size_t id_function, size_t id_rep) {
 
 template<typename scalar, typename vector_t>
 void save_results(const string &id_version, size_t id_func, size_t id_rep, bool is_valid_solution, vector_t &x,
-                  scalar time_taken, stats<scalar> &stats_, scalar beta, scalar alpha, size_t number_groups,
-                  size_t number_steps) {
+                  scalar time_taken, stats<scalar> &stats_) {
     scalar milestone_fx_1, milestone_fx_2, milestone_fx_3;
     std::chrono::duration<scalar> milestone_time_1{}, milestone_time_2{}, milestone_time_3{};
 
@@ -74,20 +61,16 @@ void save_results(const string &id_version, size_t id_func, size_t id_rep, bool 
     ofstream file_solutions;
 
     file_results.open(id_version + ".txt", std::ofstream::app);
-    file_results << id_version << "; " << number_groups << "; " << number_steps << "; " << setprecision(5) << alpha
-                 << "; " << beta << "; " << id_func << "; " << id_rep << "; 1.2e5; " << setprecision(20)
+    file_results << id_version << "; " << id_func << "; " << id_rep << "; 1.2e5; " << setprecision(20)
                  << milestone_fx_1 << "; " << is_valid_solution << "; " << milestone_time_1.count() << endl;
-    file_results << id_version << "; " << number_groups << "; " << number_steps << "; " << setprecision(5) << alpha
-                 << "; " << beta << "; " << id_func << "; " << id_rep << "; 6e5; " << setprecision(20) << milestone_fx_2
+    file_results << id_version << "; "  << "; " << id_func << "; " << id_rep << "; 6e5; " << setprecision(20) << milestone_fx_2
                  << "; " << is_valid_solution << "; " << milestone_time_2.count() << endl;
-    file_results << id_version << "; " << number_groups << "; " << number_steps << "; " << setprecision(5) << alpha
-                 << "; " << beta << "; " << id_func << "; " << id_rep << "; 3e6; " << setprecision(20) << milestone_fx_3
+    file_results << id_version << "; " << "; " << id_func << "; " << id_rep << "; 3e6; " << setprecision(20) << milestone_fx_3
                  << "; " << is_valid_solution << "; " << milestone_time_3.count() << endl;
     file_results.close();
 
     file_time_results.open(id_version + "_time.txt", std::ofstream::app);
-    file_time_results << id_version << "; " << number_groups << "; " << number_steps << "; " << setprecision(5) << alpha
-                      << "; " << beta << "; " << id_func << "; " << id_rep << "; 3e6; " << setprecision(20) << milestone_fx_3
+    file_time_results << id_version << "; " << "; " << id_func << "; " << id_rep << "; 3e6; " << setprecision(20) << milestone_fx_3
                       << "; " << is_valid_solution << "; " << setprecision(20) << time_taken << endl;
     file_time_results.close();
 
@@ -109,59 +92,23 @@ void save_results(const string &id_version, size_t id_func, size_t id_rep, bool 
 
 int main() {
 
-    vector<experiment> experiments_;
-
-    const string name_method = "lsgss_bbo_";
+    const string name_method = "gd_bbo";
     const int id_version_const = 1;
+    const scalar tol_line_search = 1e-20;
 
-    scalar beta_array[] = {0.975};
-    scalar alpha_array[] = {0.25};
-    size_t number_groups_array[] = {2};
-    size_t number_steps_array[] = {2};
+    string general_results = "general_gd_bbo_results.txt";
+    string general_results_func = "general_gd_bbo_results_func.txt";
+    scalar mean = 0.0;
+    size_t cont_exp = 0;
+    scalar current_fx_best;
 
-    size_t number_beta = 1;
-    size_t number_alpha = 1;
-    size_t number_groups = 1;
-    size_t number_steps = 1;
+    typedef problem_interface<scalar>::vector_t vector_t;
 
-    int id_version = id_version_const;
-
-    for (size_t i_group = 0; i_group < number_groups; i_group++) {
-        for (size_t i_step = 0; i_step < number_steps; i_step++) {
-            for (size_t i_alpha = 0; i_alpha < number_alpha; i_alpha++) {
-                for (size_t i_beta = 0; i_beta < number_beta; i_beta++) {
-                    experiment e;
-                    e.number_groups = number_groups_array[i_group];
-                    e.number_steps = number_steps_array[i_step];
-                    e.alpha = alpha_array[i_alpha];
-                    e.beta = beta_array[i_beta];
-                    e.exp_file_name = name_method + to_string(id_version);
-                    cout << "e.exp_file_name: " << e.exp_file_name << endl;
-                    experiments_.push_back(e);
-                    id_version++;
-                }
-            }
-        }
-    }
+    const size_t rep = 30;
+    const long number_evaluations = 3e6;
 
 
-    for (int i = 0; i < experiments_.size(); i++) {
-
-        string general_results = "general_lsgss_bbo_results.txt";
-        string general_results_func = "general_lsgss_bbo_results_func.txt";
-        scalar mean = 0.0;
-        size_t cont_exp = 0;
-        scalar current_fx_best;
-
-        typedef problem_interface<scalar>::vector_t vector_t;
-
-        const size_t rep = 30;
-        const long number_evaluations = 3e6;
-
-        cout << "i: " << i + 1 << endl;
-        cout << "name_file: " << experiments_[i].exp_file_name << endl;
-
-        for (size_t i_function = 9; i_function <= 15; i_function++) {
+        for (size_t i_function = 1; i_function <= 15; i_function++) {
 
             scalar mean_func = 0.0;
             size_t cont_exp_func = 0;
@@ -195,13 +142,11 @@ int main() {
                         get_random_generate_solution(x0, i_function, i_rep);
 
                         options<scalar> op = options<scalar>::defaults();
-                        op.set_number_groups(experiments_[i].number_groups);
-                        op.set_number_steps(experiments_[i].number_steps);
-                        op.set_alpha(experiments_[i].alpha);
-                        op.set_beta(experiments_[i].beta);
+                        op.set_line_search(line_search::Brent);
+                        op.set_line_search_tolerance(tol_line_search);
                         op.set_storage_criteria(storage_criteria_level::CEC_Stop_Points);
 
-                        lsgss_solver<f1_cec> solver;
+                        gradient_descent_solver<f1_cec> solver;
                         solver.set_options(op);
                         solver.set_stop_criteria(criteria_);
 
@@ -215,10 +160,8 @@ int main() {
 
                         bool is_valid_solution = f.isValid(x0);
 
-                        save_results(experiments_[i].exp_file_name, i_function, i_rep, is_valid_solution, x0,
-                                     time_taken, solver.get_stats(),
-                                     experiments_[i].beta, experiments_[i].alpha,
-                                     experiments_[i].number_groups, experiments_[i].number_steps);
+                        save_results(name_method, i_function, i_rep, is_valid_solution, x0,
+                                     time_taken, solver.get_stats());
 
                         break;
                     }
@@ -231,13 +174,11 @@ int main() {
                         get_random_generate_solution(x0, i_function, i_rep);
 
                         options<scalar> op = options<scalar>::defaults();
-                        op.set_number_groups(experiments_[i].number_groups);
-                        op.set_number_steps(experiments_[i].number_steps);
-                        op.set_alpha(experiments_[i].alpha);
-                        op.set_beta(experiments_[i].beta);
+                        op.set_line_search(line_search::Brent);
+                        op.set_line_search_tolerance(tol_line_search);
                         op.set_storage_criteria(storage_criteria_level::CEC_Stop_Points);
 
-                        lsgss_solver<f2_cec> solver;
+                        gradient_descent_solver<f2_cec> solver;
                         solver.set_options(op);
                         solver.set_stop_criteria(criteria_);
 
@@ -250,10 +191,8 @@ int main() {
 
                         bool is_valid_solution = f.isValid(x0);
 
-                        save_results(experiments_[i].exp_file_name, i_function, i_rep, is_valid_solution, x0,
-                                     time_taken, solver.get_stats(),
-                                     experiments_[i].beta, experiments_[i].alpha,
-                                     experiments_[i].number_groups, experiments_[i].number_steps);
+                        save_results(name_method, i_function, i_rep, is_valid_solution, x0,
+                                     time_taken, solver.get_stats());
 
                         break;
                     }
@@ -266,13 +205,11 @@ int main() {
                         get_random_generate_solution(x0, i_function, i_rep);
 
                         options<scalar> op = options<scalar>::defaults();
-                        op.set_number_groups(experiments_[i].number_groups);
-                        op.set_number_steps(experiments_[i].number_steps);
-                        op.set_alpha(experiments_[i].alpha);
-                        op.set_beta(experiments_[i].beta);
+                        op.set_line_search(line_search::Brent);
+                        op.set_line_search_tolerance(tol_line_search);
                         op.set_storage_criteria(storage_criteria_level::CEC_Stop_Points);
 
-                        lsgss_solver<f3_cec> solver;
+                        gradient_descent_solver<f3_cec> solver;
                         solver.set_options(op);
                         solver.set_stop_criteria(criteria_);
 
@@ -286,10 +223,8 @@ int main() {
 
                         bool is_valid_solution = f.isValid(x0);
 
-                        save_results(experiments_[i].exp_file_name, i_function, i_rep, is_valid_solution, x0,
-                                     time_taken, solver.get_stats(),
-                                     experiments_[i].beta, experiments_[i].alpha,
-                                     experiments_[i].number_groups, experiments_[i].number_steps);
+                        save_results(name_method, i_function, i_rep, is_valid_solution, x0,
+                                     time_taken, solver.get_stats());
 
                         break;
                     }
@@ -302,13 +237,11 @@ int main() {
                         get_random_generate_solution(x0, i_function, i_rep);
 
                         options<scalar> op = options<scalar>::defaults();
-                        op.set_number_groups(experiments_[i].number_groups);
-                        op.set_number_steps(experiments_[i].number_steps);
-                        op.set_alpha(experiments_[i].alpha);
-                        op.set_beta(experiments_[i].beta);
+                        op.set_line_search(line_search::Brent);
+                        op.set_line_search_tolerance(tol_line_search);
                         op.set_storage_criteria(storage_criteria_level::CEC_Stop_Points);
 
-                        lsgss_solver<f4_cec> solver;
+                        gradient_descent_solver<f4_cec> solver;
                         solver.set_options(op);
                         solver.set_stop_criteria(criteria_);
 
@@ -321,10 +254,8 @@ int main() {
 
                         bool is_valid_solution = f.isValid(x0);
 
-                        save_results(experiments_[i].exp_file_name, i_function, i_rep, is_valid_solution, x0,
-                                     time_taken, solver.get_stats(),
-                                     experiments_[i].beta, experiments_[i].alpha,
-                                     experiments_[i].number_groups, experiments_[i].number_steps);
+                        save_results(name_method, i_function, i_rep, is_valid_solution, x0,
+                                     time_taken, solver.get_stats());
 
                         break;
                     }
@@ -337,13 +268,11 @@ int main() {
                         get_random_generate_solution(x0, i_function, i_rep);
 
                         options<scalar> op = options<scalar>::defaults();
-                        op.set_number_groups(experiments_[i].number_groups);
-                        op.set_number_steps(experiments_[i].number_steps);
-                        op.set_alpha(experiments_[i].alpha);
-                        op.set_beta(experiments_[i].beta);
+                        op.set_line_search(line_search::Brent);
+                        op.set_line_search_tolerance(tol_line_search);
                         op.set_storage_criteria(storage_criteria_level::CEC_Stop_Points);
 
-                        lsgss_solver<f5_cec> solver;
+                        gradient_descent_solver<f5_cec> solver;
                         solver.set_options(op);
                         solver.set_stop_criteria(criteria_);
 
@@ -357,10 +286,8 @@ int main() {
 
                         bool is_valid_solution = f.isValid(x0);
 
-                        save_results(experiments_[i].exp_file_name, i_function, i_rep, is_valid_solution, x0,
-                                     time_taken, solver.get_stats(),
-                                     experiments_[i].beta, experiments_[i].alpha,
-                                     experiments_[i].number_groups, experiments_[i].number_steps);
+                        save_results(name_method, i_function, i_rep, is_valid_solution, x0,
+                                     time_taken, solver.get_stats());
 
                         break;
                     }
@@ -373,13 +300,11 @@ int main() {
                         get_random_generate_solution(x0, i_function, i_rep);
 
                         options<scalar> op = options<scalar>::defaults();
-                        op.set_number_groups(experiments_[i].number_groups);
-                        op.set_number_steps(experiments_[i].number_steps);
-                        op.set_alpha(experiments_[i].alpha);
-                        op.set_beta(experiments_[i].beta);
+                        op.set_line_search(line_search::Brent);
+                        op.set_line_search_tolerance(tol_line_search);
                         op.set_storage_criteria(storage_criteria_level::CEC_Stop_Points);
 
-                        lsgss_solver<f6_cec> solver;
+                        gradient_descent_solver<f6_cec> solver;
                         solver.set_options(op);
                         solver.set_stop_criteria(criteria_);
 
@@ -392,10 +317,8 @@ int main() {
 
                         bool is_valid_solution = f.isValid(x0);
 
-                        save_results(experiments_[i].exp_file_name, i_function, i_rep, is_valid_solution, x0,
-                                     time_taken, solver.get_stats(),
-                                     experiments_[i].beta, experiments_[i].alpha,
-                                     experiments_[i].number_groups, experiments_[i].number_steps);
+                        save_results(name_method, i_function, i_rep, is_valid_solution, x0,
+                                     time_taken, solver.get_stats());
 
                         break;
                     }
@@ -408,13 +331,11 @@ int main() {
                         get_random_generate_solution(x0, i_function, i_rep);
 
                         options<scalar> op = options<scalar>::defaults();
-                        op.set_number_groups(experiments_[i].number_groups);
-                        op.set_number_steps(experiments_[i].number_steps);
-                        op.set_alpha(experiments_[i].alpha);
-                        op.set_beta(experiments_[i].beta);
+                        op.set_line_search(line_search::Brent);
+                        op.set_line_search_tolerance(tol_line_search);
                         op.set_storage_criteria(storage_criteria_level::CEC_Stop_Points);
 
-                        lsgss_solver<f7_cec> solver;
+                        gradient_descent_solver<f7_cec> solver;
                         solver.set_options(op);
                         solver.set_stop_criteria(criteria_);
 
@@ -427,10 +348,8 @@ int main() {
 
                         bool is_valid_solution = f.isValid(x0);
 
-                        save_results(experiments_[i].exp_file_name, i_function, i_rep, is_valid_solution, x0,
-                                     time_taken, solver.get_stats(),
-                                     experiments_[i].beta, experiments_[i].alpha,
-                                     experiments_[i].number_groups, experiments_[i].number_steps);
+                        save_results(name_method, i_function, i_rep, is_valid_solution, x0,
+                                     time_taken, solver.get_stats());
 
                         break;
                     }
@@ -443,13 +362,11 @@ int main() {
                         get_random_generate_solution(x0, i_function, i_rep);
 
                         options<scalar> op = options<scalar>::defaults();
-                        op.set_number_groups(experiments_[i].number_groups);
-                        op.set_number_steps(experiments_[i].number_steps);
-                        op.set_alpha(experiments_[i].alpha);
-                        op.set_beta(experiments_[i].beta);
+                        op.set_line_search(line_search::Brent);
+                        op.set_line_search_tolerance(tol_line_search);
                         op.set_storage_criteria(storage_criteria_level::CEC_Stop_Points);
 
-                        lsgss_solver<f8_cec> solver;
+                        gradient_descent_solver<f8_cec> solver;
                         solver.set_options(op);
                         solver.set_stop_criteria(criteria_);
 
@@ -463,10 +380,8 @@ int main() {
 
                         bool is_valid_solution = f.isValid(x0);
 
-                        save_results(experiments_[i].exp_file_name, i_function, i_rep, is_valid_solution, x0,
-                                     time_taken, solver.get_stats(),
-                                     experiments_[i].beta, experiments_[i].alpha,
-                                     experiments_[i].number_groups, experiments_[i].number_steps);
+                        save_results(name_method, i_function, i_rep, is_valid_solution, x0,
+                                     time_taken, solver.get_stats());
 
                         break;
                     }
@@ -479,13 +394,11 @@ int main() {
                         get_random_generate_solution(x0, i_function, i_rep);
 
                         options<scalar> op = options<scalar>::defaults();
-                        op.set_number_groups(experiments_[i].number_groups);
-                        op.set_number_steps(experiments_[i].number_steps);
-                        op.set_alpha(experiments_[i].alpha);
-                        op.set_beta(experiments_[i].beta);
+                        op.set_line_search(line_search::Brent);
+                        op.set_line_search_tolerance(tol_line_search);
                         op.set_storage_criteria(storage_criteria_level::CEC_Stop_Points);
 
-                        lsgss_solver<f9_cec> solver;
+                        gradient_descent_solver<f9_cec> solver;
                         solver.set_options(op);
                         solver.set_stop_criteria(criteria_);
 
@@ -498,10 +411,8 @@ int main() {
 
                         bool is_valid_solution = f.isValid(x0);
 
-                        save_results(experiments_[i].exp_file_name, i_function, i_rep, is_valid_solution, x0,
-                                     time_taken, solver.get_stats(),
-                                     experiments_[i].beta, experiments_[i].alpha,
-                                     experiments_[i].number_groups, experiments_[i].number_steps);
+                        save_results(name_method, i_function, i_rep, is_valid_solution, x0,
+                                     time_taken, solver.get_stats());
 
                         break;
                     }
@@ -514,13 +425,11 @@ int main() {
                         get_random_generate_solution(x0, i_function, i_rep);
 
                         options<scalar> op = options<scalar>::defaults();
-                        op.set_number_groups(experiments_[i].number_groups);
-                        op.set_number_steps(experiments_[i].number_steps);
-                        op.set_alpha(experiments_[i].alpha);
-                        op.set_beta(experiments_[i].beta);
+                        op.set_line_search(line_search::Brent);
+                        op.set_line_search_tolerance(tol_line_search);
                         op.set_storage_criteria(storage_criteria_level::CEC_Stop_Points);
 
-                        lsgss_solver<f10_cec> solver;
+                        gradient_descent_solver<f10_cec> solver;
                         solver.set_options(op);
                         solver.set_stop_criteria(criteria_);
 
@@ -533,10 +442,8 @@ int main() {
 
                         bool is_valid_solution = f.isValid(x0);
 
-                        save_results(experiments_[i].exp_file_name, i_function, i_rep, is_valid_solution, x0,
-                                     time_taken, solver.get_stats(),
-                                     experiments_[i].beta, experiments_[i].alpha,
-                                     experiments_[i].number_groups, experiments_[i].number_steps);
+                        save_results(name_method, i_function, i_rep, is_valid_solution, x0,
+                                     time_taken, solver.get_stats());
 
                         break;
                     }
@@ -549,13 +456,11 @@ int main() {
                         get_random_generate_solution(x0, i_function, i_rep);
 
                         options<scalar> op = options<scalar>::defaults();
-                        op.set_number_groups(experiments_[i].number_groups);
-                        op.set_number_steps(experiments_[i].number_steps);
-                        op.set_alpha(experiments_[i].alpha);
-                        op.set_beta(experiments_[i].beta);
+                        op.set_line_search(line_search::Brent);
+                        op.set_line_search_tolerance(tol_line_search);
                         op.set_storage_criteria(storage_criteria_level::CEC_Stop_Points);
 
-                        lsgss_solver<f11_cec> solver;
+                        gradient_descent_solver<f11_cec> solver;
                         solver.set_options(op);
                         solver.set_stop_criteria(criteria_);
 
@@ -569,10 +474,8 @@ int main() {
 
                         bool is_valid_solution = f.isValid(x0);
 
-                        save_results(experiments_[i].exp_file_name, i_function, i_rep, is_valid_solution, x0,
-                                     time_taken, solver.get_stats(),
-                                     experiments_[i].beta, experiments_[i].alpha,
-                                     experiments_[i].number_groups, experiments_[i].number_steps);
+                        save_results(name_method, i_function, i_rep, is_valid_solution, x0,
+                                     time_taken, solver.get_stats());
 
                         break;
                     }
@@ -585,13 +488,11 @@ int main() {
                         get_random_generate_solution(x0, i_function, i_rep);
 
                         options<scalar> op = options<scalar>::defaults();
-                        op.set_number_groups(experiments_[i].number_groups);
-                        op.set_number_steps(experiments_[i].number_steps);
-                        op.set_alpha(experiments_[i].alpha);
-                        op.set_beta(experiments_[i].beta);
+                        op.set_line_search(line_search::Brent);
+                        op.set_line_search_tolerance(tol_line_search);
                         op.set_storage_criteria(storage_criteria_level::CEC_Stop_Points);
 
-                        lsgss_solver<f12_cec> solver;
+                        gradient_descent_solver<f12_cec> solver;
                         solver.set_options(op);
                         solver.set_stop_criteria(criteria_);
 
@@ -605,10 +506,8 @@ int main() {
 
                         bool is_valid_solution = f.isValid(x0);
 
-                        save_results(experiments_[i].exp_file_name, i_function, i_rep, is_valid_solution, x0,
-                                     time_taken, solver.get_stats(),
-                                     experiments_[i].beta, experiments_[i].alpha,
-                                     experiments_[i].number_groups, experiments_[i].number_steps);
+                        save_results(name_method, i_function, i_rep, is_valid_solution, x0,
+                                     time_taken, solver.get_stats());
 
                         break;
                     }
@@ -621,13 +520,11 @@ int main() {
                         get_random_generate_solution(x0, i_function, i_rep);
 
                         options<scalar> op = options<scalar>::defaults();
-                        op.set_number_groups(experiments_[i].number_groups);
-                        op.set_number_steps(experiments_[i].number_steps);
-                        op.set_alpha(experiments_[i].alpha);
-                        op.set_beta(experiments_[i].beta);
+                        op.set_line_search(line_search::Brent);
+                        op.set_line_search_tolerance(tol_line_search);
                         op.set_storage_criteria(storage_criteria_level::CEC_Stop_Points);
 
-                        lsgss_solver<f13_cec> solver;
+                        gradient_descent_solver<f13_cec> solver;
                         solver.set_options(op);
                         solver.set_stop_criteria(criteria_);
 
@@ -641,10 +538,8 @@ int main() {
 
                         bool is_valid_solution = f.isValid(x0);
 
-                        save_results(experiments_[i].exp_file_name, i_function, i_rep, is_valid_solution, x0,
-                                     time_taken, solver.get_stats(),
-                                     experiments_[i].beta, experiments_[i].alpha,
-                                     experiments_[i].number_groups, experiments_[i].number_steps);
+                        save_results(name_method, i_function, i_rep, is_valid_solution, x0,
+                                     time_taken, solver.get_stats());
 
                         break;
                     }
@@ -657,13 +552,11 @@ int main() {
                         get_random_generate_solution(x0, i_function, i_rep);
 
                         options<scalar> op = options<scalar>::defaults();
-                        op.set_number_groups(experiments_[i].number_groups);
-                        op.set_number_steps(experiments_[i].number_steps);
-                        op.set_alpha(experiments_[i].alpha);
-                        op.set_beta(experiments_[i].beta);
+                        op.set_line_search(line_search::Brent);
+                        op.set_line_search_tolerance(tol_line_search);
                         op.set_storage_criteria(storage_criteria_level::CEC_Stop_Points);
 
-                        lsgss_solver<f14_cec> solver;
+                        gradient_descent_solver<f14_cec> solver;
                         solver.set_options(op);
                         solver.set_stop_criteria(criteria_);
 
@@ -677,10 +570,8 @@ int main() {
 
                         bool is_valid_solution = f.isValid(x0);
 
-                        save_results(experiments_[i].exp_file_name, i_function, i_rep, is_valid_solution, x0,
-                                     time_taken, solver.get_stats(),
-                                     experiments_[i].beta, experiments_[i].alpha,
-                                     experiments_[i].number_groups, experiments_[i].number_steps);
+                        save_results(name_method, i_function, i_rep, is_valid_solution, x0,
+                                     time_taken, solver.get_stats());
 
                         break;
                     }
@@ -693,13 +584,11 @@ int main() {
                         get_random_generate_solution(x0, i_function, i_rep);
 
                         options<scalar> op = options<scalar>::defaults();
-                        op.set_number_groups(experiments_[i].number_groups);
-                        op.set_number_steps(experiments_[i].number_steps);
-                        op.set_alpha(experiments_[i].alpha);
-                        op.set_beta(experiments_[i].beta);
+                        op.set_line_search(line_search::Brent);
+                        op.set_line_search_tolerance(tol_line_search);
                         op.set_storage_criteria(storage_criteria_level::CEC_Stop_Points);
 
-                        lsgss_solver<f15_cec> solver;
+                        gradient_descent_solver<f15_cec> solver;
                         solver.set_options(op);
                         solver.set_stop_criteria(criteria_);
 
@@ -713,10 +602,8 @@ int main() {
 
                         bool is_valid_solution = f.isValid(x0);
 
-                        save_results(experiments_[i].exp_file_name, i_function, i_rep, is_valid_solution, x0,
-                                     time_taken, solver.get_stats(),
-                                     experiments_[i].beta, experiments_[i].alpha,
-                                     experiments_[i].number_groups, experiments_[i].number_steps);
+                        save_results(name_method, i_function, i_rep, is_valid_solution, x0,
+                                     time_taken, solver.get_stats());
 
                         break;
                     }
@@ -732,13 +619,12 @@ int main() {
             mean_func = mean_func / cont_exp_func;
             ofstream file_general_results_func;
             file_general_results_func.open(general_results_func, std::ofstream::app);
-            file_general_results_func << experiments_[i].exp_file_name << "; 3e6; " << i_function << "; " << setprecision(20) << mean_func << "; " << setprecision(2) << cont_exp_func << "; " << endl;
+            file_general_results_func << name_method << "; 3e6; " << i_function << "; " << setprecision(20) << mean_func << "; " << setprecision(2) << cont_exp_func << "; " << endl;
             file_general_results_func.close();
         }
         mean = mean / cont_exp;
         ofstream file_general_results;
         file_general_results.open(general_results, std::ofstream::app);
-        file_general_results << experiments_[i].exp_file_name << "; 3e6; " << setprecision(20) << mean << "; " << setprecision(2) << cont_exp << "; " << endl;
+        file_general_results << name_method << "; 3e6; " << setprecision(20) << mean << "; " << setprecision(2) << cont_exp << "; " << endl;
         file_general_results.close();
-    }
 }

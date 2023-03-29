@@ -2,7 +2,6 @@
 #include <vector>
 #include <chrono>
 #include <string>
-#include "ThreadPool.h"
 #include <solver/common.h>
 #include <solver/problem/bounded_problems/gbo_cec_2013_benchmark/f1_graybox_cec.h>
 #include <solver/problem/bounded_problems/gbo_cec_2013_benchmark/f2_graybox_cec.h>
@@ -19,7 +18,7 @@
 #include <solver/problem/bounded_problems/gbo_cec_2013_benchmark/f13_graybox_cec.h>
 #include <solver/problem/bounded_problems/gbo_cec_2013_benchmark/f14_graybox_cec.h>
 #include <solver/problem/bounded_problems/gbo_cec_2013_benchmark/f15_graybox_cec.h>
-#include <solver/solver/local_search/lsgss_gbo_solver.h>
+#include <solver/solver/local_search/gbo_lsgss_solver.h>
 
 using namespace solver;
 using namespace std;
@@ -108,7 +107,6 @@ void save_results(const string &id_version, size_t id_func, size_t id_rep, bool 
 
 
 int main() {
-    ThreadPool pool(1);
     vector<experiment> experiments_;
 
     const string name_method = "lsgss_gbo_";
@@ -116,7 +114,8 @@ int main() {
 
     scalar beta_array[] = {0.975};
     scalar alpha_array[] = {0.25};
-    scalar fit_accumulation_array[] = {1.0, 0.1, 0.01, 0.001, 0.0001, 0.00001, 0.0};
+    //scalar fit_accumulation_array[] = {1.0, 0.1, 0.01, 0.001, 0.0001, 0.00001, 0.0};
+    scalar fit_accumulation_array[] = {0.01};
     size_t number_groups_array[] = {2};
     size_t number_steps_array[] = {2};
     size_t number_cycle_array[] = {100};
@@ -126,7 +125,7 @@ int main() {
     size_t number_groups = 1;
     size_t number_steps = 1;
     size_t number_cycles = 1;
-    size_t number_fit_accumulation = 6;
+    size_t number_fit_accumulation = 1;
 
     int id_version = id_version_const;
 
@@ -156,7 +155,6 @@ int main() {
 
     for (int i = 0; i < experiments_.size(); i++) {
 
-        pool.enqueue([i, experiments_] {
 
         string general_results = "general_lsgss_gbo_results.txt";
         string general_results_func = "general_lsgss_gbo_results_func.txt";
@@ -216,7 +214,7 @@ int main() {
                         op.set_use_decomposition_function(true);
 
 
-                        lsgss_gbo_solver<f1_cec> solver;
+                        gbo_lsgss_solver<f1_cec> solver;
                         solver.set_options(op);
                         solver.set_stop_criteria(criteria_);
 
@@ -256,7 +254,7 @@ int main() {
                         op.set_storage_criteria(storage_criteria_level::CEC_Stop_Points);
                         op.set_use_decomposition_function(true);
 
-                        lsgss_gbo_solver<f2_cec> solver;
+                        gbo_lsgss_solver<f2_cec> solver;
                         solver.set_options(op);
                         solver.set_stop_criteria(criteria_);
 
@@ -295,7 +293,7 @@ int main() {
                         op.set_storage_criteria(storage_criteria_level::CEC_Stop_Points);
                         op.set_use_decomposition_function(true);
 
-                        lsgss_gbo_solver<f3_cec> solver;
+                        gbo_lsgss_solver<f3_cec> solver;
                         solver.set_options(op);
                         solver.set_stop_criteria(criteria_);
 
@@ -335,7 +333,7 @@ int main() {
                         op.set_storage_criteria(storage_criteria_level::CEC_Stop_Points);
                         op.set_use_decomposition_function(true);
 
-                        lsgss_gbo_solver<f4_cec> solver;
+                        gbo_lsgss_solver<f4_cec> solver;
                         solver.set_options(op);
                         solver.set_stop_criteria(criteria_);
 
@@ -374,7 +372,7 @@ int main() {
                         op.set_storage_criteria(storage_criteria_level::CEC_Stop_Points);
                         op.set_use_decomposition_function(true);
 
-                        lsgss_gbo_solver<f5_cec> solver;
+                        gbo_lsgss_solver<f5_cec> solver;
                         solver.set_options(op);
                         solver.set_stop_criteria(criteria_);
 
@@ -414,7 +412,7 @@ int main() {
                         op.set_storage_criteria(storage_criteria_level::CEC_Stop_Points);
                         op.set_use_decomposition_function(true);
 
-                        lsgss_gbo_solver<f6_cec> solver;
+                        gbo_lsgss_solver<f6_cec> solver;
                         solver.set_options(op);
                         solver.set_stop_criteria(criteria_);
 
@@ -453,7 +451,7 @@ int main() {
                         op.set_storage_criteria(storage_criteria_level::CEC_Stop_Points);
                         op.set_use_decomposition_function(true);
 
-                        lsgss_gbo_solver<f7_cec> solver;
+                        gbo_lsgss_solver<f7_cec> solver;
                         solver.set_options(op);
                         solver.set_stop_criteria(criteria_);
 
@@ -492,7 +490,7 @@ int main() {
                         op.set_storage_criteria(storage_criteria_level::CEC_Stop_Points);
                         op.set_use_decomposition_function(true);
 
-                        lsgss_gbo_solver<f8_cec> solver;
+                        gbo_lsgss_solver<f8_cec> solver;
                         solver.set_options(op);
                         solver.set_stop_criteria(criteria_);
 
@@ -532,7 +530,7 @@ int main() {
                         op.set_storage_criteria(storage_criteria_level::CEC_Stop_Points);
                         op.set_use_decomposition_function(true);
 
-                        lsgss_gbo_solver<f9_cec> solver;
+                        gbo_lsgss_solver<f9_cec> solver;
                         solver.set_options(op);
                         solver.set_stop_criteria(criteria_);
 
@@ -571,7 +569,7 @@ int main() {
                         op.set_storage_criteria(storage_criteria_level::CEC_Stop_Points);
                         op.set_use_decomposition_function(true);
 
-                        lsgss_gbo_solver<f10_cec> solver;
+                        gbo_lsgss_solver<f10_cec> solver;
                         solver.set_options(op);
                         solver.set_stop_criteria(criteria_);
 
@@ -610,7 +608,7 @@ int main() {
                         op.set_storage_criteria(storage_criteria_level::CEC_Stop_Points);
                         op.set_use_decomposition_function(true);
 
-                        lsgss_gbo_solver<f11_cec> solver;
+                        gbo_lsgss_solver<f11_cec> solver;
                         solver.set_options(op);
                         solver.set_stop_criteria(criteria_);
 
@@ -650,7 +648,7 @@ int main() {
                         op.set_storage_criteria(storage_criteria_level::CEC_Stop_Points);
                         op.set_use_decomposition_function(true);
 
-                        lsgss_gbo_solver<f12_cec> solver;
+                        gbo_lsgss_solver<f12_cec> solver;
                         solver.set_options(op);
                         solver.set_stop_criteria(criteria_);
 
@@ -690,7 +688,7 @@ int main() {
                         op.set_storage_criteria(storage_criteria_level::CEC_Stop_Points);
                         op.set_use_decomposition_function(true);
 
-                        lsgss_gbo_solver<f13_cec> solver;
+                        gbo_lsgss_solver<f13_cec> solver;
                         solver.set_options(op);
                         solver.set_stop_criteria(criteria_);
 
@@ -730,7 +728,7 @@ int main() {
                         op.set_storage_criteria(storage_criteria_level::CEC_Stop_Points);
                         op.set_use_decomposition_function(true);
 
-                        lsgss_gbo_solver<f14_cec> solver;
+                        gbo_lsgss_solver<f14_cec> solver;
                         solver.set_options(op);
                         solver.set_stop_criteria(criteria_);
 
@@ -770,7 +768,7 @@ int main() {
                         op.set_storage_criteria(storage_criteria_level::CEC_Stop_Points);
                         op.set_use_decomposition_function(true);
 
-                        lsgss_gbo_solver<f15_cec> solver;
+                        gbo_lsgss_solver<f15_cec> solver;
                         solver.set_options(op);
                         solver.set_stop_criteria(criteria_);
 
@@ -812,6 +810,5 @@ int main() {
         file_general_results.open(general_results, std::ofstream::app);
         file_general_results << experiments_[i].exp_file_name << "; " << experiments_[i].cycle << "; " << setprecision(5) << experiments_[i].fit_accumulation << "; 3e6; " << setprecision(20) << mean << "; " << setprecision(2) << cont_exp << "; " << endl;
         file_general_results.close();
-        });
     }
 }
