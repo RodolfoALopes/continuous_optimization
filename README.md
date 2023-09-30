@@ -57,7 +57,7 @@ Cmake - Minimun Version 3.9
 ## Gray-Box Approaches
 
 #### Local Search Methods
-- Gray-Box Local Search with Groups of Step Sizes (GBO-LSGSS)
+- Gray-Box Local Search with Groups of Step Sizes (GBO-LSGSS) [11]
  
 ## Example
 
@@ -162,3 +162,5 @@ We would like to thank the developers of these libraries:
 [9] Virtual Library of Simulation Experiments. *Test Functions and Datasets - Sphere Function*. Access 08-11-2020. (2020)
 
 [10] R. A. Lopes, A. R. R. Freitas, R. C. P. Silva. *Local Search with Groups of Step Sizes* Operations Research Letters. (2021) 
+
+[11] R. A. Lopes and A. R. R. Freitas. *Gray-Box local Search with Groups of Step Sizes* Soft Computing. (2023) 
